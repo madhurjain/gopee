@@ -1,0 +1,32 @@
+body {
+  padding-top: 50px;
+}
+
+/* Flatten das boostrap */
+.well, .navbar-inner, .popover, .btn, .tooltip, input, select, textarea, pre, .progress, 
+.modal, .add-on, .alert, .table-bordered, .nav>.active>a, .nav-tabs>li>a, .dropdown-menu, 
+.tooltip-inner, .badge, .label, .img-polaroid {
+  -moz-box-shadow: none !important;
+	-webkit-box-shadow: none !important;
+	box-shadow: none !important;
+	-webkit-border-radius: 0px !important;
+	-moz-border-radius: 0px !important;
+	border-radius: 0px !important;
+	border-collapse: collapse !important;
+	background-image: none !important;
+}
+
+.navbar {
+  -webkit-box-shadow: 1px 1px 2px 1px #ccc;
+  -moz-box-shadow: 1px 1px 2px 1px #ccc;
+  box-shadow: 1px 1px 2px 1px #ccc;
+}
+
+.btn-yellow {
+  color: #333;
+  background: #fff;
+}
+
+.btn-yellow:hover {
+  background: #ff6;
+}
