@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -130,7 +131,10 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-
+	var httpPort string = os.Getenv("PORT")
+	if httpPort == "" {
+		httpPort = "8080"
+	}
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/p/", proxyHandler)
 
@@ -138,8 +142,8 @@ func main() {
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
 
-	fmt.Println("Server listening on 8080")
+	fmt.Println("Server listening on " + httpPort)
   
-  http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":" + httpPort, nil)
 
 }
