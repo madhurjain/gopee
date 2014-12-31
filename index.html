@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>gopee by madhurjain</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>gopee</h1>
+        <p>Simple http web proxy in Go</p>
+
+        <p class="view"><a href="https://github.com/madhurjain/gopee">View the Project on GitHub <small>madhurjain/gopee</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/madhurjain/gopee/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/madhurjain/gopee/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/madhurjain/gopee">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h2>
+<a id="gopee" class="anchor" href="#gopee" aria-hidden="true"><span class="octicon octicon-link"></span></a>gopee</h2>
+
+<p>HTTP Web Proxy - Simple proxy service to access blocked websites</p>
+
+<p><a href="https://gopee.herokuapp.com/">https://gopee.herokuapp.com/</a></p>
+
+<h1>
+<a id="deploying-this-application" class="anchor" href="#deploying-this-application" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deploying This Application</h1>
+
+<ul>
+<li><p>Fork this repo</p></li>
+<li><p>Update .godir to match your repo url (github.com//gopee)</p></li>
+</ul>
+
+<h2>
+<a id="deploy-to-heroku" class="anchor" href="#deploy-to-heroku" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deploy to <a href="https://www.heroku.com/">heroku</a>
+</h2>
+
+<ul>
+<li><p>Download and Setup Heroku Toolbelt <a href="https://toolbelt.heroku.com/">https://toolbelt.heroku.com/</a></p></li>
+<li><p>Clone the forked repo locally and <code>cd gopee</code></p></li>
+<li><p>Create a new Heroku app, telling it to use the <a href="https://github.com/kr/heroku-buildpack-go">Go Heroku Buildpack</a> to build your Go code</p></li>
+</ul>
+
+<div class="highlight highlight-sh"><pre>heroku create -b https://github.com/kr/heroku-buildpack-go.git</pre></div>
+
+<pre><code>Creating polar-harbor-5778... done, stack is cedar-14
+BUILDPACK_URL=https://github.com/kr/heroku-buildpack-go.git
+https://polar-harbor-5778.herokuapp.com/ | https://git.heroku.com/polar-harbor-5778.git
+Git remote heroku added
+</code></pre>
+
+<ul>
+<li>Push the code to Heroku</li>
+</ul>
+
+<div class="highlight highlight-sh"><pre>git push heroku master</pre></div>
+
+<h2>
+<a id="deploy-to-openshift-by-red-hat" class="anchor" href="#deploy-to-openshift-by-red-hat" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deploy to <a href="https://www.openshift.com/">OpenShift by Red Hat</a>
+</h2>
+
+<ul>
+<li><p>Download and Setup OpenShift Client Tools (<em>rhc</em>) <a href="https://developers.openshift.com/en/managing-client-tools.html">https://developers.openshift.com/en/managing-client-tools.html</a></p></li>
+<li><p>Create a new OpenShift application, telling it to use the <a href="https://github.com/smarterclayton/openshift-go-cart">OpenShift Go Cartridge</a> to build your Go code and your forked github repo for Source</p></li>
+</ul>
+
+<div class="highlight highlight-sh"><pre>rhc app create myproxy https://cartreflect-claytondev.rhcloud.com/reflect<span class="pl-k">?</span>github=smarterclayton/openshift-go-cart --from-code <span class="pl-k">&lt;</span>forked-github-repo-url<span class="pl-k">&gt;</span></pre></div>
+
+<pre><code>Your application 'myproxy' is now available.
+  URL:        http://myproxy-gopee.rhcloud.com/
+  SSH to:     &lt;hash&gt;@myproxy-gopee.rhcloud.com
+  Git remote: ssh://&lt;hash&gt;@myproxy-gopee.rhcloud.com/~/git/myproxy.git/
+</code></pre>
+
+<ul>
+<li>Login to your OpenShift console and you should see an application created</li>
+</ul>
+
+<h2>
+<a id="credits" class="anchor" href="#credits" aria-hidden="true"><span class="octicon octicon-link"></span></a>Credits</h2>
+
+<p><a href="https://github.com/Omie">@Omie</a> for pushing me to learn Go and introducing me to Heroku and OpenShift</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/madhurjain">madhurjain</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
