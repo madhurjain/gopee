@@ -33,19 +33,19 @@
 
 <p>HTTP Web Proxy - Simple proxy service to access blocked websites</p>
 
-<p><a href="https://gopee.herokuapp.com/">https://gopee.herokuapp.com/</a></p>
+<p>Demo <a href="https://gopee.herokuapp.com/">https://gopee.herokuapp.com/</a></p>
 
 <h1>
 <a id="deploying-this-application" class="anchor" href="#deploying-this-application" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deploying This Application</h1>
 
 <ul>
 <li><p>Fork this repo</p></li>
-<li><p>Update .godir to match your repo url (github.com//gopee)</p></li>
+<li><p>Update .godir to match your forked repo url</p></li>
 </ul>
 
-<h2>
+<h4>
 <a id="deploy-to-heroku" class="anchor" href="#deploy-to-heroku" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deploy to <a href="https://www.heroku.com/">heroku</a>
-</h2>
+</h4>
 
 <ul>
 <li><p>Download and Setup Heroku Toolbelt <a href="https://toolbelt.heroku.com/">https://toolbelt.heroku.com/</a></p></li>
@@ -67,9 +67,9 @@ Git remote heroku added
 
 <div class="highlight highlight-sh"><pre>git push heroku master</pre></div>
 
-<h2>
+<h4>
 <a id="deploy-to-openshift-by-red-hat" class="anchor" href="#deploy-to-openshift-by-red-hat" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deploy to <a href="https://www.openshift.com/">OpenShift by Red Hat</a>
-</h2>
+</h4>
 
 <ul>
 <li><p>Download and Setup OpenShift Client Tools (<em>rhc</em>) <a href="https://developers.openshift.com/en/managing-client-tools.html">https://developers.openshift.com/en/managing-client-tools.html</a></p></li>
@@ -85,8 +85,22 @@ Git remote heroku added
 </code></pre>
 
 <ul>
-<li>Login to your OpenShift console and you should see an application created</li>
+<li><p>Open the above URL in your browser</p></li>
+<li><p>Login to your OpenShift console and you should see an application created</p></li>
 </ul>
+
+<h2>
+<a id="errata" class="anchor" href="#errata" aria-hidden="true"><span class="octicon octicon-link"></span></a>Errata</h2>
+
+<ul>
+<li><p>Doesn't support anything which requires sessions / cookies / logging in, yet</p></li>
+<li><p>Most AJAX requests don't work since the URLs are not rewritten</p></li>
+</ul>
+
+<h2>
+<a id="why-" class="anchor" href="#why-" aria-hidden="true"><span class="octicon octicon-link"></span></a>Why ?</h2>
+
+<p>To learn Golang</p>
 
 <h2>
 <a id="credits" class="anchor" href="#credits" aria-hidden="true"><span class="octicon octicon-link"></span></a>Credits</h2>
@@ -99,6 +113,16 @@ Git remote heroku added
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-58125540-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
   </body>
 </html>
