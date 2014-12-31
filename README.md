@@ -3,7 +3,7 @@ gopee
 
 HTTP Web Proxy - Simple proxy service to access blocked websites
 
-https://gopee.herokuapp.com/
+Demo https://gopee.herokuapp.com/
 
 
 Deploying This Application
@@ -11,9 +11,9 @@ Deploying This Application
 
 - Fork this repo
 
-- Update .godir to match your repo url (github.com/<handle>/gopee)
+- Update .godir to match your forked repo url
 
-## Deploy to [heroku](https://www.heroku.com/)
+#### Deploy to [heroku](https://www.heroku.com/)
 
 - Download and Setup Heroku Toolbelt https://toolbelt.heroku.com/
 
@@ -38,7 +38,7 @@ Git remote heroku added
 git push heroku master
 ```
 
-## Deploy to [OpenShift by Red Hat](https://www.openshift.com/)
+#### Deploy to [OpenShift by Red Hat](https://www.openshift.com/)
 
 - Download and Setup OpenShift Client Tools (*rhc*) https://developers.openshift.com/en/managing-client-tools.html
 
@@ -55,7 +55,19 @@ Your application 'myproxy' is now available.
   Git remote: ssh://<hash>@myproxy-gopee.rhcloud.com/~/git/myproxy.git/
 ```
 
+- Open the above URL in your browser
+
 - Login to your OpenShift console and you should see an application created
+
+## Errata
+
+- Doesn't support anything which requires sessions / cookies / logging in, yet
+
+- Most AJAX requests don't work since the URLs are not rewritten
+
+## Why ?
+
+To learn Golang
  
 ## Credits
 

@@ -29,9 +29,14 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.ParseForm()
-	url := r.FormValue("url")
-	if url != "" {
-		encodedUrl := base64.StdEncoding.EncodeToString([]byte(url))
+	enteredUrl := r.FormValue("url")
+	if enteredUrl != "" {
+		validUrl, _ := url.Parse(enteredUrl)		
+		// prepend http if not specified
+		if validUrl.Scheme == "" {
+			validUrl.Scheme = "http"
+		}
+		encodedUrl := base64.StdEncoding.EncodeToString([]byte(validUrl.String()))
 		http.Redirect(w, r, "/p/"+encodedUrl, 302)
 		return
 	}
