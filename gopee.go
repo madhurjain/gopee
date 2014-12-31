@@ -31,7 +31,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	enteredUrl := r.FormValue("url")
 	if enteredUrl != "" {
-		validUrl, _ := url.Parse(enteredUrl)		
+		validUrl, _ := url.Parse(enteredUrl)
 		// prepend http if not specified
 		if validUrl.Scheme == "" {
 			validUrl.Scheme = "http"
@@ -151,7 +151,7 @@ func main() {
 	})
 
 	fmt.Printf("web proxy listening on %s:%s\n", httpHost, httpPort)
-  
-	http.ListenAndServe(httpHost + ":" + httpPort, nil)
+
+	http.ListenAndServe(httpHost+":"+httpPort, nil)
 
 }
