@@ -73,7 +73,6 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	urlString := string(url[:])
-	fmt.Println(urlString)
 	resp, err := http.Get(urlString)
 	if err != nil {
 		fmt.Println("Error Fetching " + urlString)
@@ -131,7 +130,11 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	var httpHost string = os.Getenv("HOST")
 	var httpPort string = os.Getenv("PORT")
+	if httpHost == "" {
+		httpHost = "localhost"
+	}
 	if httpPort == "" {
 		httpPort = "8080"
 	}
@@ -142,8 +145,8 @@ func main() {
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
 
-	fmt.Println("Server listening on " + httpPort)
+	fmt.Printf("web proxy listening on %s:%s\n", httpHost, httpPort)
   
-	http.ListenAndServe(":" + httpPort, nil)
+	http.ListenAndServe(httpHost + ":" + httpPort, nil)
 
 }
