@@ -22,6 +22,29 @@ body {
   box-shadow: 1px 1px 2px 1px #ccc;
 }
 
+.main {	
+	text-align: center;
+	color: #333;
+}
+
+.title {	
+	font-family: 'Pacifico', cursive;	
+}
+
+.main p {
+	padding: 10px 0px;
+}
+
+.main .input-group {
+	text-align: left;
+	width: 60%;
+	margin: auto;
+}
+
+.main .input-group .input-group-btn {
+	width: 60px;
+}
+
 .btn-yellow {
   color: #333;
   background: #fff;
@@ -29,4 +52,23 @@ body {
 
 .btn-yellow:hover {
   background: #ff6;
+}
+
+.heart {
+	color: #f00;
+}
+
+.footer {
+	position: absolute;
+	bottom: 0px;
+	text-align: right;
+	padding: 10px;	
+	width: 100%;
+}
+
+ 
+@media only screen and (max-width : 480px) {
+	.main .input-group {
+		width: 90%;
+	}
 }
