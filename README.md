@@ -3,8 +3,13 @@ gopee
 
 HTTP Web Proxy - Simple proxy service to access blocked websites
 
-Demo https://gopee.herokuapp.com/
+Demo
 
+https://gopee.herokuapp.com/
+
+or
+
+http://go-gopee.rhcloud.com/
 
 Deploying This Application
 ==========================
