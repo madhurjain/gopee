@@ -136,10 +136,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	var httpHost string = os.Getenv("HOST")
-	var httpPort string = os.Getenv("PORT")
-	if httpHost == "" {
-		httpHost = "localhost"
-	}
+	var httpPort string = os.Getenv("PORT")	
 	if httpPort == "" {
 		httpPort = "8080"
 	}
