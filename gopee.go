@@ -22,6 +22,8 @@ var reBase = regexp.MustCompile("base +href=\"(.*?)\"")
 var reHTML = regexp.MustCompile("src=[\"\\'](.*?)[\"\\']|href=[\"\\'](.*?)[\"\\']")
 var reCSS = regexp.MustCompile("url\\([\"\\']?(.*?)[\"\\']?\\)")
 
+var httpClient *http.Client = &http.Client{}
+
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	// 404 for all other url path
 	if r.URL.Path[1:] != "" {
@@ -78,7 +80,13 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	urlString := string(url[:])
-	resp, err := http.Get(urlString)
+	req, _ := http.NewRequest("GET", urlString, nil)
+	
+	// Set request user agent to that of user's
+	req.Header.Set("User-Agent", r.Header.Get("User-Agent"))
+	
+	resp, err := httpClient.Do(req)
+	
 	if err != nil {
 		fmt.Println("Error Fetching " + urlString)
 		http.NotFound(w, r)
