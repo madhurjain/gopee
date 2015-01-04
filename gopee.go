@@ -19,7 +19,7 @@ var templates = template.Must(template.ParseFiles("home.html"))
 
 // Pre-compile RegEx
 var reBase = regexp.MustCompile("base +href=\"(.*?)\"")
-var reHTML = regexp.MustCompile("src=[\"\\'](.*?)[\"\\']|href=[\"\\'](.*?)[\"\\']")
+var reHTML = regexp.MustCompile("src=[\"\\'](.*?)[\"\\']|href=[\"\\'](.*?)[\"\\']|action=[\"\\'](.*?)[\"\\']")
 var reCSS = regexp.MustCompile("url\\([\"\\']?(.*?)[\"\\']?\\)")
 
 var httpClient *http.Client = &http.Client{}
@@ -80,8 +80,8 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	urlString := string(url[:])
-	req, _ := http.NewRequest("GET", urlString, nil)
-	
+	req, _ := http.NewRequest(r.Method, urlString, r.Body)
+	req.Header.Set("Content-Type", r.Header.Get("Content-Type"))
 	// Set request user agent to that of user's
 	req.Header.Set("User-Agent", r.Header.Get("User-Agent"))
 	
@@ -118,6 +118,12 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 				hrefIndex := parts[4:6]
 				if hrefIndex[0] != -1 {
 					return encodeURL(s, baseHref, urlString, hrefIndex[0], hrefIndex[1])
+				}
+				
+				// replace form action attribute
+				actionIndex := parts[6:8]
+				if actionIndex[0] != -1 {
+					return encodeURL(s, baseHref, urlString, actionIndex[0], actionIndex[1])
 				}
 			}
 			return s
