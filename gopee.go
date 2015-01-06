@@ -94,8 +94,16 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	contentType := resp.Header.Get("Content-Type")
-	w.Header().Set("Content-Type", contentType)
+	contentType := ""
+
+	//Write all remote resp header to client
+	for headerKey := range resp.Header {
+		headerVal := resp.Header.Get(headerKey)
+		w.Header().Set(headerKey, headerVal)
+		if headerKey == "Content-Type" {
+			contentType = headerVal
+		}
+	}
 
 	// Rewrite all urls
 	baseHref := ""
