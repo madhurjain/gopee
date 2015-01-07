@@ -84,9 +84,9 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	req.Header.Set("Content-Type", r.Header.Get("Content-Type"))
 	// Set request user agent to that of user's
 	req.Header.Set("User-Agent", r.Header.Get("User-Agent"))
-	
+
 	resp, err := httpClient.Do(req)
-	
+
 	if err != nil {
 		fmt.Println("Error Fetching " + urlString)
 		http.NotFound(w, r)
@@ -94,8 +94,16 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	contentType := resp.Header.Get("Content-Type")
-	w.Header().Set("Content-Type", contentType)
+	contentType := ""
+
+	//Write all remote resp header to client
+	for headerKey := range resp.Header {
+		headerVal := resp.Header.Get(headerKey)
+		w.Header().Set(headerKey, headerVal)
+		if headerKey == "Content-Type" {
+			contentType = headerVal
+		}
+	}
 
 	// Rewrite all urls
 	baseHref := ""
@@ -119,7 +127,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 				if hrefIndex[0] != -1 {
 					return encodeURL(s, baseHref, urlString, hrefIndex[0], hrefIndex[1])
 				}
-				
+
 				// replace form action attribute
 				actionIndex := parts[6:8]
 				if actionIndex[0] != -1 {
@@ -150,7 +158,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	var httpHost string = os.Getenv("HOST")
-	var httpPort string = os.Getenv("PORT")	
+	var httpPort string = os.Getenv("PORT")
 	if httpPort == "" {
 		httpPort = "8080"
 	}
