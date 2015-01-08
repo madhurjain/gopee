@@ -5,7 +5,7 @@ HTTP Web Proxy - Simple proxy service to access blocked websites
 
 Demo
 
-https://gopee.herokuapp.com/
+~~https://gopee.herokuapp.com/~~ (Terminated by Heroku)
 
 or
 
