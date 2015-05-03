@@ -45,8 +45,9 @@ var hopHeaders = map[string]bool{
 // Headers that create problem handling response
 // TODO: support gzip compressed response in future
 var problemHeaders = map[string]bool{
-	"content-security-policy": true, // sent in response
-	"accept-encoding":         true, // sent in request
+	"content-security-policy":             true, // sent in response
+	"content-security-policy-report-only": true, // sent in response
+	"accept-encoding":                     true, // sent in request
 }
 
 type proxyManager struct {
@@ -55,8 +56,28 @@ type proxyManager struct {
 	resp *http.Response
 }
 
-func encodeURL(plainURL string) string {
-	return GopeeEncPrefix + base64.URLEncoding.EncodeToString([]byte(plainURL))
+func encodeURL(plainURL []byte) string {
+	return GopeeEncPrefix + base64.URLEncoding.EncodeToString(plainURL)
+}
+
+func decodeURL(encodedURL string) (decodedURI *url.URL, err error) {
+	encodedURL = strings.TrimSpace(encodedURL)
+	if encodedURL == "" || !strings.HasPrefix(encodedURL, GopeeEncPrefix) {
+		err = errors.New("invalid path supplied to decode")
+		return nil, err
+	}
+	encodedURL = strings.TrimLeft(encodedURL, GopeeEncPrefix)
+	decoded, err := base64.URLEncoding.DecodeString(encodedURL)
+	if err != nil {
+		log.Println(err.Error(), " for url ", encodedURL)
+		return nil, err
+	}
+	decodedURI, err = url.Parse(string(decoded))
+	if err != nil {
+		log.Println("error parsing", string(decoded))
+		return nil, err
+	}
+	return decodedURI, err
 }
 
 // ProxyRequest creates a new request to be proxied
@@ -66,39 +87,28 @@ func ProxyRequest(r *http.Request, w http.ResponseWriter) {
 	// Path can be of the form
 	// /base64-encoded-string
 	// /home/ajax.php
+	// http://thirdparty.com/resource.js
+	path := r.URL.Path[1:]
 
-	path := strings.TrimSpace(r.URL.Path[1:])
-
-	if strings.HasPrefix(path, GopeeEncPrefix) {
+	if decodedURL, err := decodeURL(path); err == nil {
 		// URL rewritten by GoPee
-		path = strings.TrimLeft(path, GopeeEncPrefix)
-		components := strings.Split(path, "/")
-		decodedURL, err := base64.URLEncoding.DecodeString(components[0])
-		if err != nil {
-			log.Println(err.Error(), " for url ", path)
-			return
-		}
-		uri, err = url.Parse(string(decodedURL[:]))
-		if err != nil {
-			log.Println("Error Parsing " + string(decodedURL[:]))
-		}
+		uri = decodedURL
 	} else {
 		// Might be a plain-text URL which was not rewritten
-		urlCookie, _ := r.Cookie(URLCookie)
-		// check if a cookie is set
-		if urlCookie != nil {
-			baseURL, err := url.Parse(urlCookie.Value)
+		// AJAX request ?
+		path += "?" + r.URL.RawQuery
+		pathURI, err := url.Parse(path)
+		if err != nil {
+			log.Println("error parsing", path)
+		}
+		if pathURI.IsAbs() {
+			uri = pathURI
+		} else {
+			referer, err := url.Parse(r.Referer())
 			if err != nil {
-				log.Println("Error Parsing " + urlCookie.Value)
+				log.Println("error parsing", r.Referer())
 			}
-			path += "?" + r.URL.RawQuery
-			pathURI, err := url.Parse(path)
-			if err != nil {
-				log.Println("Error Parsing " + path)
-			}
-			if pathURI.IsAbs() {
-				uri = pathURI
-			} else {
+			if baseURL, err := decodeURL(referer.Path[1:]); err == nil {
 				uri = baseURL.ResolveReference(pathURI)
 			}
 		}
@@ -119,36 +129,33 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	if pm.uri == nil {
 		return errors.New("No URI specified to fetch")
 	}
-	// log.Println("Fetch: " + pm.uri.String())
 	req, _ := http.NewRequest(pm.req.Method, pm.uri.String(), pm.req.Body)
 	// Forward request headers, included User-Agent to server
 	copyHeader(req.Header, pm.req.Header)
+	// Set http client protocol version
 	req.Proto = "HTTP/1.1"
 	req.ProtoMajor = 1
 	req.ProtoMinor = 1
 	pm.resp, err = httpClient.Do(req)
 	if err != nil {
-		log.Println("Error Fetching " + pm.uri.String())
+		log.Println("error fetching", pm.uri.String())
 		return err
 	}
 	defer pm.resp.Body.Close()
+
+	// In case there was a url redirect
+	// http -> https or non-www -> www
+	pm.uri = pm.resp.Request.URL
 
 	contentType := pm.resp.Header.Get("Content-Type")
 
 	// Forward response headers to client
 	copyHeader(w.Header(), pm.resp.Header)
 
+	w.WriteHeader(pm.resp.StatusCode)
+
 	// Rewrite all urls
 	if strings.Contains(contentType, "text/html") {
-		// HTTP is stateless, store the url in cookie to handle
-		// AJAX requests for which the URLs were not rewritten
-		// And don't set cookies for responses to AJAX requests
-		if strings.ToLower(pm.req.Header.Get("X-Requested-With")) != "xmlhttprequest" {
-			pm.uri.Fragment = ""
-			// log.Println("Cookie URI ", pm.uri)
-			cookie := &http.Cookie{Name: URLCookie, Value: pm.uri.String()}
-			http.SetCookie(w, cookie)
-		}
 		pm.rewriteHTML(w)
 	} else if strings.Contains(contentType, "text/css") {
 		pm.rewriteCSS(w)
@@ -190,19 +197,19 @@ func (pm *proxyManager) rewriteHTML(w http.ResponseWriter) {
 			// replace src attribute
 			srcIndex := parts[2:4]
 			if srcIndex[0] != -1 {
-				return pm.encodeURL(s, srcIndex[0], srcIndex[1])
+				return pm.rewriteURI(s, srcIndex[0], srcIndex[1])
 			}
 
 			// replace href attribute
 			hrefIndex := parts[4:6]
 			if hrefIndex[0] != -1 {
-				return pm.encodeURL(s, hrefIndex[0], hrefIndex[1])
+				return pm.rewriteURI(s, hrefIndex[0], hrefIndex[1])
 			}
 
 			// replace form action attribute
 			actionIndex := parts[6:8]
 			if actionIndex[0] != -1 {
-				return pm.encodeURL(s, actionIndex[0], actionIndex[1])
+				return pm.rewriteURI(s, actionIndex[0], actionIndex[1])
 			}
 		}
 		return s
@@ -218,7 +225,7 @@ func (pm *proxyManager) rewriteCSS(w http.ResponseWriter) {
 			// replace url attribute in css
 			pathIndex := parts[2:4]
 			if pathIndex[0] != -1 {
-				return pm.encodeURL(s, pathIndex[0], pathIndex[1])
+				return pm.rewriteURI(s, pathIndex[0], pathIndex[1])
 			}
 		}
 		return s
@@ -227,10 +234,10 @@ func (pm *proxyManager) rewriteCSS(w http.ResponseWriter) {
 
 }
 
-func (pm *proxyManager) encodeURL(src []byte, start int, end int) []byte {
+func (pm *proxyManager) rewriteURI(src []byte, start int, end int) []byte {
 	relURL := string(src[start:end])
 	// keep anchor and javascript links intact
-	if relURL == "" || strings.Index(relURL, "#") == 0 || strings.Index(relURL, "javascript") == 0 {
+	if relURL == "" || strings.HasPrefix(relURL, "#") || strings.HasPrefix(relURL, "javascript") || strings.HasPrefix(relURL, "data") {
 		return src
 	}
 	// Check if url is relative and make it absolute
@@ -243,10 +250,7 @@ func (pm *proxyManager) encodeURL(src []byte, start int, end int) []byte {
 		src = bytes.Replace(src, []byte(relURL), []byte(absURL), -1)
 		end = start + len(absURL)
 	}
-	encodedPath := make([]byte, base64.URLEncoding.EncodedLen(end-start))
-	base64.URLEncoding.Encode(encodedPath, src[start:end])
-	// add some identifier to encoded urls
-	encodedString := GopeeEncPrefix + string(encodedPath)
+	encodedString := encodeURL(src[start:end])
 	return bytes.Replace(src, src[start:end], []byte(encodedString), -1)
 }
 
@@ -264,7 +268,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			if uri.Scheme == "" {
 				uri.Scheme = "http"
 			}
-			http.Redirect(w, r, "/"+encodeURL(uri.String()), 302)
+			http.Redirect(w, r, "/"+encodeURL([]byte(uri.String())), 302)
 			return
 		}
 		templates.ExecuteTemplate(w, "home.html", nil)
