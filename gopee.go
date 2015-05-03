@@ -123,7 +123,9 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	req, _ := http.NewRequest(pm.req.Method, pm.uri.String(), pm.req.Body)
 	// Forward request headers, included User-Agent to server
 	copyHeader(req.Header, pm.req.Header)
-
+	req.Proto = "HTTP/1.1"
+	req.ProtoMajor = 1
+	req.ProtoMinor = 1
 	pm.resp, err = httpClient.Do(req)
 	if err != nil {
 		log.Println("Error Fetching " + pm.uri.String())
@@ -161,6 +163,7 @@ func copyHeader(dst, src http.Header) {
 	for k, vv := range src {
 		// Don't copy hop-by-hop headers and problem headers
 		if hopHeaders[strings.ToLower(k)] || problemHeaders[strings.ToLower(k)] {
+			dst.Del(k) // remove any existing hop-by-hop header
 			continue
 		}
 		for _, v := range vv {
