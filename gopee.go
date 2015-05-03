@@ -42,6 +42,13 @@ var hopHeaders = map[string]bool{
 	"upgrade":           true,
 }
 
+// Headers that create problem handling response
+// TODO: support gzip compressed response in future
+var problemHeaders = map[string]bool{
+	"content-security-policy": true, // sent in response
+	"accept-encoding":         true, // sent in request
+}
+
 type proxyManager struct {
 	req  *http.Request
 	uri  *url.URL
@@ -129,13 +136,6 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	// Forward response headers to client
 	copyHeader(w.Header(), pm.resp.Header)
 
-	// Remove the Content-Security-Policy header
-	for k, _ := range w.Header() {
-		if strings.ToLower(k) == "content-security-policy" {
-			w.Header().Del(k)
-		}
-	}
-
 	// Rewrite all urls
 	if strings.Contains(contentType, "text/html") {
 		// HTTP is stateless, store the url in cookie to handle
@@ -159,8 +159,8 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 // Copy Headers from src to dst ignoring hop-by-hop headers
 func copyHeader(dst, src http.Header) {
 	for k, vv := range src {
-		// Don't copy hop-by-hop headers
-		if hopHeaders[strings.ToLower(k)] {
+		// Don't copy hop-by-hop headers and problem headers
+		if hopHeaders[strings.ToLower(k)] || problemHeaders[strings.ToLower(k)] {
 			continue
 		}
 		for _, v := range vv {
