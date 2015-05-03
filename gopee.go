@@ -24,11 +24,23 @@ const GopeeEncPrefix = "xox"
 // Pre-compile RegEx
 var reBase = regexp.MustCompile(`base +href="(.*?)"`)
 var reHTML = regexp.MustCompile(`\saction=["']?(.*?)["'\s]|\shref=["']?(.*?)["'\s]|\ssrc=["']?(.*?)["'\s]`)
-var reCSS = regexp.MustCompile(`url(["']?(.*?)["']?)`)
+var reCSS = regexp.MustCompile(`url\(["']?(.*?)["']?\)`)
 
 var reBase64 = regexp.MustCompile("^(?:[A-Za-z0-9-_]{4})*(?:[A-Za-z0-9-_]{2}==|[A-Za-z0-9-_]{3}=)?$")
 
 var httpClient = &http.Client{}
+
+// Hop-by-hop headers
+var hopHeaders = map[string]bool{
+	"connection":          true,
+	"keep-alive":          true,
+	"proxy-authenticate":  true,
+	"proxy-authorization": true,
+	"te":                true,
+	"trailers":          true,
+	"transfer-encoding": true,
+	"upgrade":           true,
+}
 
 type proxyManager struct {
 	req  *http.Request
@@ -102,9 +114,8 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	}
 	// log.Println("Fetch: " + pm.uri.String())
 	req, _ := http.NewRequest(pm.req.Method, pm.uri.String(), pm.req.Body)
-	req.Header.Set("Content-Type", pm.req.Header.Get("Content-Type"))
-	// Set proxy's user agent to that of user's
-	req.Header.Set("User-Agent", pm.req.Header.Get("User-Agent"))
+	// Forward request headers, included User-Agent to server
+	copyHeader(req.Header, pm.req.Header)
 
 	pm.resp, err = httpClient.Do(req)
 	if err != nil {
@@ -114,7 +125,16 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	defer pm.resp.Body.Close()
 
 	contentType := pm.resp.Header.Get("Content-Type")
-	pm.forwardHeaders(w)
+
+	// Forward response headers to client
+	copyHeader(w.Header(), pm.resp.Header)
+
+	// Remove the Content-Security-Policy header
+	for k, _ := range w.Header() {
+		if strings.ToLower(k) == "content-security-policy" {
+			w.Header().Del(k)
+		}
+	}
 
 	// Rewrite all urls
 	if strings.Contains(contentType, "text/html") {
@@ -136,11 +156,16 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	return nil
 }
 
-func (pm *proxyManager) forwardHeaders(w http.ResponseWriter) {
-	// Write all remote response headers to client
-	for headerKey := range pm.resp.Header {
-		headerVal := pm.resp.Header.Get(headerKey)
-		w.Header().Set(headerKey, headerVal)
+// Copy Headers from src to dst ignoring hop-by-hop headers
+func copyHeader(dst, src http.Header) {
+	for k, vv := range src {
+		// Don't copy hop-by-hop headers
+		if hopHeaders[strings.ToLower(k)] {
+			continue
+		}
+		for _, v := range vv {
+			dst.Add(k, v)
+		}
 	}
 }
 
