@@ -15,9 +15,6 @@ import (
 	"strings"
 )
 
-// URLCookie - cookie which stores page url
-const URLCookie = "X-GoPee-URL"
-
 // GopeeEncPrefix - encoding prefix used while encoding urls
 const GopeeEncPrefix = "xox"
 
@@ -145,8 +142,12 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	defer pm.resp.Body.Close()
 
 	// In case there was a url redirect
-	// http -> https or non-www -> www
-	pm.uri = pm.resp.Request.URL
+	// http -> https, non-www -> www, login page
+	if pm.uri.String() != pm.resp.Request.URL.String() {
+		pm.uri = pm.resp.Request.URL
+		http.Redirect(w, pm.req, "/"+encodeURL([]byte(pm.uri.String())), 302)
+		return nil
+	}
 
 	contentType := pm.resp.Header.Get("Content-Type")
 
