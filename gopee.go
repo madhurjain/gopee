@@ -25,7 +25,7 @@ var reCSS = regexp.MustCompile(`url\(["']?(.*?)["']?\)`)
 
 var reBase64 = regexp.MustCompile("^(?:[A-Za-z0-9-_]{4})*(?:[A-Za-z0-9-_]{2}==|[A-Za-z0-9-_]{3}=)?$")
 
-var httpClient = &http.Client{}
+var httpClient = &http.Client{CheckRedirect: redirectPolicy}
 
 // Hop-by-hop headers
 var hopHeaders = map[string]bool{
@@ -51,6 +51,22 @@ type proxyManager struct {
 	req  *http.Request
 	uri  *url.URL
 	resp *http.Response
+}
+
+func redirectPolicy(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("too many redirects")
+	}
+	if len(via) == 0 {
+		return nil
+	}
+	// copy all headers
+	for attr, val := range via[0].Header {
+		if _, ok := req.Header[attr]; !ok {
+			req.Header[attr] = val
+		}
+	}
+	return nil
 }
 
 func encodeURL(plainURL []byte) string {
@@ -126,6 +142,7 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	if pm.uri == nil {
 		return errors.New("No URI specified to fetch")
 	}
+
 	req, _ := http.NewRequest(pm.req.Method, pm.uri.String(), pm.req.Body)
 	// Forward request headers to server
 	copyHeader(req.Header, pm.req.Header)
@@ -134,6 +151,7 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	req.Proto = "HTTP/1.1"
 	req.ProtoMajor = 1
 	req.ProtoMinor = 1
+
 	pm.resp, err = httpClient.Do(req)
 	if err != nil {
 		log.Println("error fetching", pm.uri.String())
