@@ -94,7 +94,7 @@ func (manager *Manager) setCookie(sid string, w http.ResponseWriter) {
 
 // Create will create a new client store
 func (manager *Manager) Create() *ClientStore {
-	log.Println("SESSION::CREATE")
+	// log.Println("SESSION::CREATE")
 	manager.lock.Lock()
 	defer manager.lock.Unlock()
 	cookieJar, _ := cookiejar.New(nil)
@@ -108,7 +108,7 @@ func (manager *Manager) Create() *ClientStore {
 
 // Get will try to get the existing session
 func (manager *Manager) Get(sid string) *ClientStore {
-	log.Println("SESSION::GET", sid)
+	// log.Println("SESSION::GET", sid)
 	manager.lock.RLock()
 	defer manager.lock.RUnlock()
 	if element, ok := manager.clients[sid]; ok {
@@ -119,7 +119,7 @@ func (manager *Manager) Get(sid string) *ClientStore {
 }
 
 func (manager *Manager) Destroy(sid string) {
-	log.Println("SESSION::DESTROY", sid)
+	// log.Println("SESSION::DESTROY", sid)
 	manager.lock.Lock()
 	defer manager.lock.Unlock()
 	if element, ok := manager.clients[sid]; ok {
@@ -129,7 +129,7 @@ func (manager *Manager) Destroy(sid string) {
 }
 
 func (manager *Manager) Update(sid string) {
-	log.Println("SESSION::UPDATE", sid)
+	// log.Println("SESSION::UPDATE", sid)
 	manager.lock.Lock()
 	defer manager.lock.Unlock()
 	if element, ok := manager.clients[sid]; ok {
@@ -140,7 +140,7 @@ func (manager *Manager) Update(sid string) {
 
 // clean clients for expired sessions
 func (manager *Manager) GC() {
-	log.Println("SESSION::GC")
+	// log.Println("SESSION::GC")
 	manager.lock.Lock()
 	defer manager.lock.Unlock()
 	// iterate until all expired sessions are removed
@@ -152,7 +152,7 @@ func (manager *Manager) GC() {
 			break
 		}
 		if (element.Value.(*ClientStore).lastAccessed.Unix() + manager.maxLifetime) < time.Now().Unix() {
-			log.Println("REMOVE", element.Value.(*ClientStore).sessionId)
+			// log.Println("REMOVE", element.Value.(*ClientStore).sessionId)
 			delete(manager.clients, element.Value.(*ClientStore).sessionId)
 			manager.list.Remove(element)
 		} else {
