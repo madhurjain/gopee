@@ -25,8 +25,6 @@ var reCSS = regexp.MustCompile(`url\(["']?(.*?)["']?\)`)
 
 var reBase64 = regexp.MustCompile("^(?:[A-Za-z0-9-_]{4})*(?:[A-Za-z0-9-_]{2}==|[A-Za-z0-9-_]{3}=)?$")
 
-var httpClient = &http.Client{CheckRedirect: redirectPolicy}
-
 // Hop-by-hop headers
 var hopHeaders = map[string]bool{
 	"connection":          true,
@@ -41,10 +39,11 @@ var hopHeaders = map[string]bool{
 
 // Headers that create problem handling response
 // TODO: support gzip compressed response in future
-var problemHeaders = map[string]bool{
+var skipHeaders = map[string]bool{
 	"content-security-policy":             true, // sent in response
 	"content-security-policy-report-only": true, // sent in response
 	"accept-encoding":                     true, // sent in request
+	"cookie":                              true, // sent in request
 }
 
 type proxyManager struct {
@@ -53,21 +52,7 @@ type proxyManager struct {
 	resp *http.Response
 }
 
-func redirectPolicy(req *http.Request, via []*http.Request) error {
-	if len(via) >= 10 {
-		return errors.New("too many redirects")
-	}
-	if len(via) == 0 {
-		return nil
-	}
-	// copy all headers
-	for attr, val := range via[0].Header {
-		if _, ok := req.Header[attr]; !ok {
-			req.Header[attr] = val
-		}
-	}
-	return nil
-}
+var sessionManager *Manager
 
 func encodeURL(plainURL []byte) string {
 	return GopeeEncPrefix + base64.URLEncoding.EncodeToString(plainURL)
@@ -138,11 +123,20 @@ func ProxyRequest(r *http.Request, w http.ResponseWriter) {
 }
 
 // Fetch makes the actual request to server and writes data with rewritten URLs to response
-func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
+func (pm *proxyManager) Fetch(w http.ResponseWriter) {
 	if pm.uri == nil {
-		return errors.New("No URI specified to fetch")
+		http.Error(w, "No URI specified to fetch", http.StatusBadRequest)
+		return
 	}
 
+	// Get the http client assigned to this session
+	// If a session does not exist or is expired, create a new session
+	httpClient, err := sessionManager.Start(w, pm.req)
+
+	if err != nil {
+		http.Error(w, "Unable to start session", http.StatusInternalServerError)
+		return
+	}
 	req, _ := http.NewRequest(pm.req.Method, pm.uri.String(), pm.req.Body)
 	// Forward request headers to server
 	copyHeader(req.Header, pm.req.Header)
@@ -154,8 +148,9 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 
 	pm.resp, err = httpClient.Do(req)
 	if err != nil {
-		log.Println("error fetching", pm.uri.String())
-		return err
+		log.Println("error fetching", pm.uri.String(), err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	defer pm.resp.Body.Close()
 
@@ -164,7 +159,7 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	if pm.uri.String() != pm.resp.Request.URL.String() {
 		pm.uri = pm.resp.Request.URL
 		http.Redirect(w, pm.req, "/"+encodeURL([]byte(pm.uri.String())), 302)
-		return nil
+		return
 	}
 
 	contentType := pm.resp.Header.Get("Content-Type")
@@ -182,7 +177,6 @@ func (pm *proxyManager) Fetch(w http.ResponseWriter) (err error) {
 	} else {
 		io.Copy(w, pm.resp.Body)
 	}
-	return nil
 }
 
 func copyHeader(dst, src http.Header) {
@@ -196,7 +190,7 @@ func copyHeader(dst, src http.Header) {
 	for h, _ := range hopHeaders {
 		dst.Del(h)
 	}
-	for h, _ := range problemHeaders {
+	for h, _ := range skipHeaders {
 		dst.Del(h)
 	}
 }
@@ -305,6 +299,10 @@ func main() {
 	if httpPort == "" {
 		httpPort = "8080"
 	}
+
+	sessionManager = NewManager("gopee", 600) // client session expiry set to 600s (10mins)
+	go sessionManager.GC()
+
 	http.HandleFunc("/", homeHandler)
 
 	http.HandleFunc("/assets/", func(w http.ResponseWriter, r *http.Request) {
