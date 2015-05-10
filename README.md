@@ -1,7 +1,7 @@
 gopee
 -----
 
-HTTP Web Proxy - Simple proxy service to access blocked websites
+HTTP Web Proxy - full-fledged, self-hosted proxy to access blocked websites
 
 Demo
 
@@ -64,16 +64,22 @@ Your application 'myproxy' is now available.
 
 - Login to your OpenShift console and you should see an application created
 
+## Features
+
+- Most AJAX requests are proxied
+
+- Supports Sessions, Cookies, Logging-In on most websites
+
 ## Errata
 
-- Doesn't support anything which requires sessions / cookies / logging in, yet
-
-- Most AJAX requests don't work since the URLs are not rewritten
+- GMail and YouTube don't work
 
 ## Why ?
 
-To learn Golang
- 
+- To learn Golang
+
+- To create a simple to deploy yet powerful proxy
+
 ## Credits
 
 [@Omie](https://github.com/Omie) for pushing me to learn Go and introducing me to Heroku and OpenShift
