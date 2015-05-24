@@ -11,7 +11,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
